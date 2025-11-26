@@ -847,12 +847,6 @@
     </div>
   </div>
 
-  <!-- Footer Info -->
-  <div class="fixed bottom-4 text-gray-500 text-xs text-center">
-    <p>Frontend Demo • Svelte + Tailwind</p>
-    <p class="opacity-50">Arrastra en el anillo para navegar</p>
-  </div>
-
   <!-- Input oculto para cargar archivos MP3 -->
   <input
     bind:this={fileInputRef}
