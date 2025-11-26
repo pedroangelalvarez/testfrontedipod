@@ -576,7 +576,7 @@
 </script>
 
 <div
-  class="min-h-screen bg-gray-200 flex items-center justify-center p-4 font-sans select-none"
+  class="min-h-[70vh] md:min-h-screen bg-gray-200 flex items-center justify-center p-4 font-sans select-none"
 >
   <!-- EL DISPOSITIVO (CHASIS) -->
   <div
