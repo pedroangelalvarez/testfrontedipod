@@ -580,7 +580,7 @@
 >
   <!-- EL DISPOSITIVO (CHASIS) -->
   <div
-    class="relative w-[340px] h-[500px] bg-gradient-to-br from-gray-100 to-gray-300 rounded-[35px] shadow-2xl p-6 border border-white flex flex-col gap-6 transform transition-transform hover:scale-[1.01] duration-500"
+    class="relative w-[340px] h-[510px] bg-gradient-to-br from-gray-100 to-gray-300 rounded-[35px] shadow-2xl p-6 border border-white flex flex-col gap-6 transform transition-transform hover:scale-[1.01] duration-500"
   >
     <!-- Acabado Metálico / Brillo -->
     <div
@@ -589,7 +589,7 @@
 
     <!-- PANTALLA -->
     <div
-      class="w-full h-56 bg-black rounded-lg border-2 border-gray-400 overflow-hidden shadow-inner relative flex flex-col"
+      class="w-full h-52 bg-black rounded-lg border-2 border-gray-400 overflow-hidden shadow-inner relative flex flex-col"
     >
       <!-- Backlight simulado -->
       <div
@@ -621,7 +621,7 @@
           <!-- Vista de "Reproducción" (Detalle de Proyecto) -->
           <div class="flex flex-col h-full bg-white">
             <div
-              class="flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-800 to-black text-white relative overflow-hidden"
+              class="flex-1 flex flex-col items-center justify-center p-2 bg-gradient-to-br from-gray-800 to-black text-white relative overflow-hidden"
             >
               <!-- Reflejo simulado -->
               <div
@@ -630,7 +630,7 @@
 
               <div
                 class="{activeSong.coverColor ||
-                  'bg-gray-500'} w-32 h-32 shadow-2xl mb-4 flex items-center justify-center rounded-sm border border-white/20 overflow-hidden"
+                  'bg-gray-500'} w-24 h-24 shadow-2xl mb-2 flex items-center justify-center rounded-sm border border-white/20 overflow-hidden"
               >
                 {#if activeSong.coverArt}
                   <img
@@ -796,7 +796,7 @@
         bind:this={wheelElement}
         on:mousedown={handleWheelStart}
         on:touchstart={handleWheelStart}
-        class="w-48 h-48 bg-[#f0f0f0] rounded-full shadow-lg relative flex items-center justify-center cursor-pointer active:cursor-grabbing border border-gray-300"
+        class="w-56 h-56 bg-[#f0f0f0] rounded-full shadow-lg relative flex items-center justify-center cursor-pointer active:cursor-grabbing border border-gray-300"
         style="box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.15)"
       >
         <!-- MENU (Arriba) -->
