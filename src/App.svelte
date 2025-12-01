@@ -85,6 +85,31 @@
             icon: Star,
           },
           {
+            label: "Style",
+            type: "menu",
+            icon: Star,
+            children: [
+              {
+                label: "Silver",
+                type: "style-option",
+                value: "Silver",
+                icon: Star,
+              },
+              {
+                label: "White",
+                type: "style-option",
+                value: "White",
+                icon: Star,
+              },
+              {
+                label: "Purple",
+                type: "style-option",
+                value: "Purple",
+                icon: Star,
+              },
+            ],
+          },
+          {
             label: "Main Menu",
             type: "unavailable",
             icon: Music,
@@ -150,6 +175,28 @@
   };
 
   // --- STATE ---
+  const STYLES = {
+    Silver: {
+      chassis: "bg-gradient-to-br from-gray-100 to-gray-300",
+      wheel: "bg-[#f0f0f0]",
+      button: "bg-gradient-to-br from-gray-200 to-gray-300",
+      wheelText: "text-gray-500 hover:text-black",
+    },
+    White: {
+      chassis: "bg-gradient-to-br from-white to-gray-50",
+      wheel: "bg-gray-100",
+      button: "bg-white",
+      wheelText: "text-gray-400 hover:text-black",
+    },
+    Purple: {
+      chassis: "bg-gradient-to-br from-purple-700 to-purple-900",
+      wheel: "bg-white",
+      button: "bg-white",
+      wheelText: "text-gray-400 hover:text-black",
+    },
+  };
+  let currentStyle = STYLES.Silver;
+
   let menuStack = [
     { title: PORTFOLIO_DATA.title, items: PORTFOLIO_DATA.items },
   ];
@@ -225,6 +272,21 @@
 
   $: currentMenu = menuStack[menuStack.length - 1].items;
 
+  // --- LOGIC: Auto-scroll Menu ---
+  let menuContainer;
+
+  $: if (menuContainer && (selectedIndex >= 0 || currentMenu)) {
+    // Usar setTimeout para asegurar que el DOM se ha actualizado
+    setTimeout(() => {
+      if (menuContainer && menuContainer.children[selectedIndex]) {
+        menuContainer.children[selectedIndex].scrollIntoView({
+          block: "nearest",
+          behavior: "auto",
+        });
+      }
+    }, 0);
+  }
+
   // --- LOGIC: Navegación ---
 
   function scrollDown() {
@@ -286,6 +348,13 @@
       }, 100);
     } else if (item.type === "text") {
       activeSong = { ...item, artist: "Información", album: "Detalle" };
+    } else if (item.type === "style-option") {
+      currentStyle = STYLES[item.value];
+      triggerHaptic("heavy");
+      // Volver al menú anterior
+      menuStack.pop();
+      menuStack = menuStack;
+      selectedIndex = 0;
     }
   }
 
@@ -330,6 +399,64 @@
 
   // --- LOGIC: Manejo de archivos MP3 ---
 
+  async function fetchCoverArtFromMusicBrainz(title, artist) {
+    if (!title || !artist || artist === "Artista Desconocido") return null;
+
+    try {
+      // 1. Buscar el MBID de la grabación (recording)
+      // Construimos la query manualmente para evitar que los dos puntos (:) sean codificados
+      // MusicBrainz parece preferir 'recording:Nombre' en lugar de 'recording%3ANombre'
+      const encodedTitle = encodeURIComponent(title);
+      const encodedArtist = encodeURIComponent(artist);
+      const query = `recording:${encodedTitle}%20AND%20artist:${encodedArtist}`;
+
+      const mbResponse = await fetch(
+        `https://musicbrainz.org/ws/2/recording/?query=${query}&fmt=json`,
+        {
+          headers: {
+            "User-Agent": "iPodClassicClone/1.0 ( your-email@example.com )", // Reemplaza con tu contacto si es necesario
+            Accept: "application/json",
+          },
+        },
+      );
+
+      if (!mbResponse.ok) return null;
+
+      const mbData = await mbResponse.json();
+
+      if (mbData.recordings && mbData.recordings.length > 0) {
+        // Iterar sobre las grabaciones y sus lanzamientos para encontrar una carátula válida
+        for (const recording of mbData.recordings) {
+          if (recording.releases && recording.releases.length > 0) {
+            for (const release of recording.releases) {
+              const releaseMbid = release.id;
+              const imageUrl = `https://coverartarchive.org/release/${releaseMbid}/front`;
+
+              try {
+                // Verificar si la imagen existe haciendo una petición HEAD
+                // fetch seguirá los redireccionamientos (307) automáticamente
+                const imageResponse = await fetch(imageUrl, {
+                  method: "HEAD",
+                });
+
+                if (imageResponse.ok) {
+                  return imageUrl;
+                }
+              } catch (err) {
+                // Continuar con el siguiente release si falla
+                continue;
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error al buscar carátula en MusicBrainz:", error);
+    }
+
+    return null;
+  }
+
   async function processSingleFile(file) {
     // Extraer título y artista del nombre del archivo
     const fileName = file.name.replace(".mp3", "");
@@ -356,6 +483,11 @@
       }
     } catch (metadataError) {
       console.log("No se pudieron leer los metadatos:", metadataError);
+    }
+
+    // Si no hay carátula en los metadatos, buscar en MusicBrainz
+    if (!coverArt) {
+      coverArt = await fetchCoverArtFromMusicBrainz(title, artist);
     }
 
     // Crear objeto de canción
@@ -580,7 +712,7 @@
 >
   <!-- EL DISPOSITIVO (CHASIS) -->
   <div
-    class="relative w-[340px] h-[510px] bg-gradient-to-br from-gray-100 to-gray-300 rounded-[35px] shadow-2xl p-6 border border-white flex flex-col gap-6 transform transition-transform hover:scale-[1.01] duration-500"
+    class="relative w-[340px] h-[510px] {currentStyle.chassis} rounded-[35px] shadow-2xl p-6 border border-white flex flex-col gap-6 transform transition-transform hover:scale-[1.01] duration-500"
   >
     <!-- Acabado Metálico / Brillo -->
     <div
@@ -701,7 +833,7 @@
               >
                 {menuStack[menuStack.length - 1].title || "Menu"}
               </div>
-              <div class="overflow-hidden flex-1">
+              <div class="overflow-hidden flex-1" bind:this={menuContainer}>
                 {#each currentMenu as item, index}
                   <div
                     class="flex justify-between items-center px-2 py-1.5 text-xs font-medium cursor-pointer transition-colors {index ===
@@ -796,12 +928,12 @@
         bind:this={wheelElement}
         on:mousedown={handleWheelStart}
         on:touchstart={handleWheelStart}
-        class="w-56 h-56 bg-[#f0f0f0] rounded-full shadow-lg relative flex items-center justify-center cursor-pointer active:cursor-grabbing border border-gray-300"
+        class="w-56 h-56 {currentStyle.wheel} rounded-full shadow-lg relative flex items-center justify-center cursor-pointer active:cursor-grabbing border border-gray-300"
         style="box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.15)"
       >
         <!-- MENU (Arriba) -->
         <button
-          class="absolute top-3 text-xs font-bold text-gray-500 hover:text-black tracking-wide p-4"
+          class="absolute top-3 text-xs font-bold {currentStyle.wheelText} tracking-wide p-4"
           on:click|stopPropagation={handleMenu}
         >
           MENU
@@ -809,7 +941,7 @@
 
         <!-- NEXT (Derecha) -->
         <button
-          class="absolute right-3 text-gray-500 hover:text-black p-4"
+          class="absolute right-3 {currentStyle.wheelText} p-4"
           on:click|stopPropagation={activeSong && loadedSongs.length > 1
             ? playNextSong
             : scrollDown}
@@ -819,7 +951,7 @@
 
         <!-- PREV (Izquierda) -->
         <button
-          class="absolute left-3 text-gray-500 hover:text-black p-4"
+          class="absolute left-3 {currentStyle.wheelText} p-4"
           on:click|stopPropagation={activeSong && loadedSongs.length > 1
             ? playPreviousSong
             : scrollUp}
@@ -829,7 +961,7 @@
 
         <!-- PLAY/PAUSE (Abajo) -->
         <button
-          class="absolute bottom-3 text-gray-500 hover:text-black p-4 flex gap-0.5"
+          class="absolute bottom-3 {currentStyle.wheelText} p-4 flex gap-0.5"
           on:click|stopPropagation={handlePlayPause}
         >
           <Play size={16} fill="currentColor" />
@@ -838,7 +970,7 @@
 
         <!-- Botón Central (Select) -->
         <button
-          class="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full shadow-inner border border-gray-300 flex items-center justify-center active:scale-95 transition-transform z-10"
+          class="w-20 h-20 {currentStyle.button} rounded-full shadow-inner border border-gray-300 flex items-center justify-center active:scale-95 transition-transform z-10"
           on:click|stopPropagation={handleSelect}
           style="box-shadow: inset 0 2px 5px rgba(255,255,255,0.8), inset 0 -2px 5px rgba(0,0,0,0.1), 0 5px 10px rgba(0,0,0,0.2)"
         >
